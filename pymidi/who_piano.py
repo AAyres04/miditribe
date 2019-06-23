@@ -2,6 +2,7 @@ import pygame.midi
 import mido
 from mido import Message, MidiFile, MidiTrack
 import sys
+import time
 
 arr_midi = []
 track = MidiTrack()
@@ -27,7 +28,7 @@ def readInput(input_device):
 			id_note = data[0]
 			note_number = data[1]
 			velocity = data[2]
-			if id_note == 144:
+			#if id_note == 144:
 
 			if(note_number != 0 or note_number != 254):
 				miditime = int(round(mido.second2tick(0,mid.ticks_per_beat, mido.bpm2tempo(120))))
@@ -66,7 +67,9 @@ def readAndTransformInput(input_device):
 
 
 pygame.midi.init()
-print_devices()
+while True:
+	print_devices()
+	time.sleep(2)
 #if len(sys.argv)<2:
 #	print("Especifique el nombre del piano")
 #	print_devices()

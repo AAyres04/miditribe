@@ -28,6 +28,7 @@ class CK_rec(object):
 
     def __call__(self, event, data=None):
         message, deltatime = event
+        print(event)
         # if message[0] == 254:  #compensate for active sense delta times
         self.__activesense += deltatime
         # else:
