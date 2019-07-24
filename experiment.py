@@ -25,11 +25,11 @@
 import os
 
 # external
-import pygame
+import pygame as game
 import time
 # custom
 from pytribe import EyeTribe
-from pymidi import recorder as rec
+from pymidi.who_piano import PianoRecord
 #from pymidi.CK_rec import all
 #import time
 import rtmidi
@@ -37,12 +37,6 @@ import rtmidi
 import sys
 #import os
 import inspect
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir)
-from pymidi.CK_rec.setup import Setup
-from pymidi.CK_rec.rec_classes import CK_rec
-
 # # # # #
 # CONSTANTS
 
@@ -65,11 +59,11 @@ tracker = EyeTribe(logfilename=LOGFILE)
 
 #try to use pymidi
 
-# initialize PyGame
-pygame.init()
+# initialize game
+game.init()
 
 # create a new display
-disp = pygame.display.set_mode(RESOLUTION, pygame.FULLSCREEN)
+disp = game.display.set_mode(RESOLUTION, game.FULLSCREEN)
 
 # compile a list of images
 images = {}
@@ -77,7 +71,7 @@ for filename in IMGNAMES:
         # check if the extension is a JPEG image
         if os.path.splitext(filename)[1] == '.jpg':
                 # load the image, and add to the image dict
-                images[filename] =  pygame.image.load(os.path.join(IMGDIR,filename))
+                images[filename] =  game.image.load(os.path.join(IMGDIR,filename))
 
 
 # # # # #
@@ -97,52 +91,54 @@ for imgname in images.keys():
 
 
         # show the image
-        pygame.display.flip()
+        game.display.flip()
         tracker.log_message("image_on")
         tracker.log_message(imgname)
 
         # start recording midi data
-        codeK = Setup()
+        #codeK = Setup()
         #myPort = codeK.perform_setup()
-        myPort = 0
-        codeK.open_port(myPort)
-        on_id = 144
-        midiRec = CK_rec(myPort, on_id)
-        codeK.set_callback(midiRec)
-        id_record += 1
+        #myPort = 0
+        #codeK.open_port(myPort)
+        #on_id = 144
+        #midiRec = CK_rec(myPort, on_id)
+        #codeK.set_callback(midiRec)
+        #id_record += 1
         # wait for a bit
-        # pygame.time.wait(5000)
+        # game.time.wait(5000)
+        pianito = PianoRecord()
         # show a blank screen
         disp.fill(BGC)
         evkey = True
+        counter = 0
         while evkey:
-            time.sleep(0.001)
-            events = pygame.event.get()
+            #time.sleep(0.001)
+            counter = counter + 1
+            events = game.event.get()
+            pianito.start_recording()
             for event in events:
-                    if event.type == pygame.KEYDOWN:
-                            if event.key == pygame.K_SPACE:
-                                    evkey = False
-                                    name = name_record + str(id_record)
-                                    if name != "":
-                                        midiRec.saveTrack(name)
-                                    codeK.end()
-                                    pygame.display.flip()
-                                    tracker.log_message("image_off")
-                                    tracker.stop_recording()
+	            if event.type == game.KEYDOWN:
+	            	if event.key == game.K_SPACE:
+	                    evkey = False
+	                    game.display.flip()
+	                    pianito.stop_recording()
+	                    tracker.log_message("image_off")
+	                    tracker.stop_recording()
         #rec.save(id_record,"veamos")
-                #if event.key == pygame.K_RIGHT:
+                #if event.key == game.K_RIGHT:
                     #location += 1
         # stop recording
         #tracker.stop_recording()
 
         # wait for a bit
-        #pygame.time.wait(2000)
+        #game.time.wait(2000)
 
 # # # # #
 # CLOSE
 
 # close connection to the tracker
+
 tracker.close()
 
 # close the display
-pygame.quit()
+game.quit()

@@ -1,106 +1,75 @@
 import pygame.midi
 import mido
-from mido import Message, MidiFile, MidiTrack
 import sys
 import time
 
-arr_midi = []
-track = MidiTrack()
-mid = MidiFile()
+class PianoRecord():
 
-def print_devices():
-    for n in range(pygame.midi.get_count()):
-        print (n,pygame.midi.get_device_info(n))
+	def print_devices(self):
+	    for n in range(pygame.midi.get_count()):
+	        print (n,pygame.midi.get_device_info(n))
 
-def number_to_note(number):
-    notes = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b']
-    return notes[number%12]
 
-def readInput(input_device):
-	arr_final_midi = []
-	going = True
-	while going:
+	def readInput(self, input_device):
 		if input_device.poll():
 
 			event = input_device.read(1)[0]
-			arr_midi.append(event)
 			data = event[0]
 			id_note = data[0]
 			note_number = data[1]
 			velocity = data[2]
+			time = event[1]
 			#if id_note == 144:
+			note_status = self.transform_id(id_note)
 
 			if(note_number != 0 or note_number != 254):
-				miditime = int(round(mido.second2tick(0,mid.ticks_per_beat, mido.bpm2tempo(120))))
-				print (event)
-			if(note_number == 100):
-				going = False
-
-	#pygame.midi.quit()
-	if len(arr_midi)>1024:
-		for i in range(0,1024):
-			arr_final_midi[i] = arr_midi[i]
-	else:
-		arr_final_midi = arr_midi
-	#leid = pygame.midi.get_default_output_id()
-	#hola = pygame.midi.Output(leid, 0)
-	#hola.write(arr_final_midi)
+					#miditime = int(round(mido.second2tick(0,mid.ticks_per_beat, mido.bpm2tempo(120))))
+				print (note_number, note_status, time)
 
 
-#def inputLine(timestamp1, timestamp2):
-	#delta_timestamp = timestamp2 - timestamp1
-	#if (delta_timestamp < )
+	def transform_id(self, id_note):
+		if id_note == 144:
+			return "note_on"
+		elif id_note == 128:
+			return "note_off"
+		else:
+			return "invalid"
 
-def readAndTransformInput(input_device):
-    while True:
-        if input_device.poll():
-            event = input_device.read(1)[0]
-            data = event[0]
-            timestamp = event[1]
-            note_number = data[1]
-            velocity = data[2]
-            if(note_number != 248):
-            	print (number_to_note(note_number), velocity, note_number)
-            	
+	def __init__(self):
+		pygame.midi.init()
+		self.print_devices()
+		self.__arr_name = [""]*pygame.midi.get_count()
+		self.__arr_device = [""]*pygame.midi.get_count()
+		self.__arr_input = [""]*pygame.midi.get_count()
+		self.__arr_output = [""]*pygame.midi.get_count()
+		self.__arr_active = [""]*pygame.midi.get_count()
+		self.__num_device = []
+		self.__my_input = self.set_piano()
 
-#if __name__ == '__main__':
+	def search_piano(self):
+		for n in range(pygame.midi.get_count()):
+		    (aux_name, aux_device, aux_input, aux_output, aux_active) = pygame.midi.get_device_info(n)
+		    self.__arr_name[n] = aux_name
+		    self.__arr_device[n] = aux_device
+		    self.__arr_input[n] = aux_input
+		    self.__arr_output[n] = aux_output
+		    self.__arr_active[n] = aux_active
+		print(self.__arr_input)
+		for n in range(pygame.midi.get_count()):
+			aux = self.__arr_input[n]
+			aux_int = int(aux)
+			if(aux_int == 1):
+				self.__num_device.append(n)
+		return self.__num_device[0]
 
-
-pygame.midi.init()
-while True:
-	print_devices()
-	time.sleep(2)
-#if len(sys.argv)<2:
-#	print("Especifique el nombre del piano")
-#	print_devices()
-#	pygame.midi.quit()
-#	sys.exit(0)
-arr_name = [""]*pygame.midi.get_count()
-arr_device = [""]*pygame.midi.get_count()
-arr_input = [""]*pygame.midi.get_count()
-arr_output = [""]*pygame.midi.get_count()
-arr_active = [""]*pygame.midi.get_count()
-num_device = []
-
-for n in range(pygame.midi.get_count()):
-    (aux_name, aux_device, aux_input, aux_output, aux_active) = pygame.midi.get_device_info(n)
-    arr_name[n] = aux_name
-    arr_device[n] = aux_device
-    arr_input[n] = aux_input
-    arr_output[n] = aux_output
-    arr_active[n] = aux_active
-print(arr_input)
-for n in range(pygame.midi.get_count()):
-	aux = arr_input[n]
-	aux_int = int(aux)
-	if(aux_int == 1):
-		num_device.append(n)
-
-try:
-	for num in num_device:
+	def set_piano(self):
+		num = self.search_piano()
 		my_input = pygame.midi.Input(num)
-		readInput(my_input)
-except KeyboardInterrupt:
-	pygame.midi.quit()
-finally:
-	pygame.midi.quit()
+		return my_input
+
+	def stop_recording(self):
+		del self.__my_input
+		pygame.midi.quit()
+
+	def start_recording(self):
+		self.readInput(self.__my_input)
